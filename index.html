@@ -7,335 +7,418 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Tabata">
-<meta name="theme-color" content="#0e0f12">
-<title>Tabata Timer</title>
-<link rel="apple-touch-icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect width='180' height='180' fill='%230e0f12'/><circle cx='90' cy='96' r='56' fill='none' stroke='%2334d399' stroke-width='14'/><rect x='80' y='22' width='20' height='16' rx='4' fill='%2334d399'/><path d='M90 96 L90 60' stroke='white' stroke-width='10' stroke-linecap='round'/></svg>">
+<meta name="theme-color" content="#F3F3F0">
+<title>Tabata</title>
+<link rel="apple-touch-icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect width='180' height='180' fill='%23111'/><rect x='0' y='70' width='180' height='110' fill='%23FF4B2B'/><text x='90' y='62' font-family='Helvetica,Arial' font-weight='700' font-size='40' fill='white' text-anchor='middle'>20/10</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#0e0f12; --card:#17191e; --line:#262a31; --text:#f2f3f5; --muted:#8b919c;
-    --work:#34d399; --rest:#fb923c; --round:#60a5fa; --prep:#facc15; --done:#a78bfa;
-    --accent:var(--work);
+    --bg:#F3F3F0; --ink:#111111; --soft:#8A8A85; --line:#DEDED9; --chip:#E8E8E4;
+    --work:#FF4B2B; --work-d:#B5301A;
+    --rest:#3D5AFE; --rest-d:#2236A8;
+    --round:#00A88F; --round-d:#006E5E;
+    --prep:#F08C00; --prep-d:#A35F00;
+    --done:#1B1B1B; --done-d:#000000;
+    --f:"Space Grotesk",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#0D0D0D; --ink:#F2F2EE; --soft:#77776F; --line:#232321; --chip:#1C1C1A; }
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-  html,body{margin:0;height:100%;background:var(--bg);color:var(--text);
-    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;
-    -webkit-user-select:none;user-select:none;overscroll-behavior:none}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:var(--f);
+    -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;overscroll-behavior:none}
   body{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
-  button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
+  button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;touch-action:manipulation}
   .hidden{display:none!important}
+  .num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
 
-  /* ---------- Config ---------- */
-  #setup{max-width:480px;margin:0 auto;padding:20px 16px 40px}
-  header{display:flex;align-items:baseline;justify-content:space-between;margin:8px 4px 18px}
-  h1{font-size:28px;margin:0;letter-spacing:-.5px}
-  .total{color:var(--muted);font-variant-numeric:tabular-nums;font-size:15px}
-  .total b{color:var(--text);font-weight:600}
+  /* ============ CONFIG ============ */
+  #setup{max-width:520px;margin:0 auto;padding:18px 22px 130px}
+  .top{display:flex;justify-content:space-between;align-items:center;margin-top:6px}
+  .brand{font-size:13px;font-weight:700;letter-spacing:.32em}
+  .menuBtn{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;letter-spacing:.08em;
+    text-transform:uppercase;padding:9px 14px;border:1.5px solid var(--ink);border-radius:999px}
+  .menuBtn svg{width:14px;height:14px}
 
-  .presets{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 14px;scrollbar-width:none}
-  .presets::-webkit-scrollbar{display:none}
-  .chip{flex:none;padding:8px 14px;border-radius:999px;background:var(--card);border:1px solid var(--line);
-    font-size:14px;white-space:nowrap;position:relative}
-  .chip.active{border-color:var(--work);color:var(--work)}
-  .chip .x{margin-left:8px;color:var(--muted);font-size:13px}
+  .hero{margin:34px 0 8px}
+  .hero .lbl{font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--soft)}
+  .hero .big{font-size:76px;font-weight:700;line-height:.95;letter-spacing:-.04em;margin-top:6px}
+  .hero .name{font-size:15px;color:var(--soft);margin-top:10px;min-height:20px}
+  .hero .name b{color:var(--ink);font-weight:500}
 
-  .group{background:var(--card);border:1px solid var(--line);border-radius:16px;margin-bottom:14px;overflow:hidden}
-  .row{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--line);gap:10px}
-  .row:last-child{border-bottom:0}
-  .label{display:flex;align-items:center;gap:10px;font-size:16px}
-  .dot{width:10px;height:10px;border-radius:50%;flex:none}
-  .sub{display:block;font-size:12px;color:var(--muted);margin-top:2px}
-  .stepper{display:flex;align-items:center;gap:4px}
-  .stepper button{width:40px;height:40px;border-radius:12px;background:#22252c;font-size:22px;line-height:1;
-    display:flex;align-items:center;justify-content:center}
-  .stepper button:active{background:#2e323b}
-  .val{min-width:62px;text-align:center;font-size:19px;font-weight:600;font-variant-numeric:tabular-nums}
+  .strip{display:flex;height:10px;gap:2px;margin:22px 0 26px;border-radius:2px;overflow:hidden}
+  .strip i{display:block;min-width:2px}
 
-  .toggle{width:50px;height:30px;border-radius:999px;background:#3a3f48;position:relative;transition:.2s}
-  .toggle::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:.2s}
-  .toggle.on{background:var(--work)}
-  .toggle.on::after{left:23px}
+  .rows{border-top:1.5px solid var(--ink)}
+  .row{display:flex;align-items:center;justify-content:space-between;padding:16px 0;border-bottom:1px solid var(--line)}
+  .rlabel{display:flex;align-items:center;gap:12px}
+  .sq{width:12px;height:12px;flex:none}
+  .rlabel .t{font-size:16px;font-weight:500}
+  .rlabel .s{display:block;font-size:12px;color:var(--soft);margin-top:2px;letter-spacing:.02em}
+  .stepper{display:flex;align-items:center;gap:6px}
+  .stepper button{width:42px;height:42px;border-radius:50%;border:1.5px solid var(--line);display:flex;
+    align-items:center;justify-content:center;transition:background .12s,border-color .12s}
+  .stepper button svg{width:16px;height:16px}
+  .stepper button:active,.stepper button.held{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+  .val{min-width:74px;text-align:center;font-size:26px;font-weight:700;letter-spacing:-.02em}
 
-  textarea{width:100%;min-height:84px;background:#101216;border:1px solid var(--line);border-radius:12px;color:var(--text);
-    font:inherit;font-size:15px;padding:10px 12px;resize:vertical;-webkit-user-select:text;user-select:text}
-  .names{padding:12px 14px}
-  .names p{margin:0 0 8px;font-size:13px;color:var(--muted)}
+  .section{margin-top:30px}
+  .shead{font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--soft);margin-bottom:10px}
+  textarea{width:100%;min-height:96px;background:transparent;border:1.5px solid var(--line);border-radius:4px;
+    color:var(--ink);font:inherit;font-size:15px;padding:12px;resize:vertical;-webkit-user-select:text;user-select:text;outline:none}
+  textarea:focus{border-color:var(--ink)}
+  .hint{font-size:12px;color:var(--soft);margin-top:8px;line-height:1.4}
 
-  .actions{display:flex;gap:10px;margin-top:6px}
-  .btn{flex:1;height:54px;border-radius:16px;font-size:17px;font-weight:600}
-  .btn.primary{background:var(--work);color:#06281b;flex:2}
-  .btn.ghost{background:var(--card);border:1px solid var(--line)}
+  .switch{width:48px;height:28px;border-radius:999px;border:1.5px solid var(--ink);position:relative;transition:.2s}
+  .switch::after{content:"";position:absolute;top:3px;left:3px;width:19px;height:19px;border-radius:50%;background:var(--ink);transition:.2s}
+  .switch.on{background:var(--ink)}
+  .switch.on::after{left:23px;background:var(--bg)}
 
-  /* ---------- Run ---------- */
-  #run{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:space-between;
-    padding:calc(env(safe-area-inset-top) + 18px) 20px calc(env(safe-area-inset-bottom) + 24px);
-    background:radial-gradient(120% 70% at 50% 40%, color-mix(in srgb, var(--accent) 22%, var(--bg)) 0%, var(--bg) 70%);
-    transition:background .4s}
-  .topline{width:100%;max-width:480px;display:flex;justify-content:space-between;color:var(--muted);font-size:15px;font-variant-numeric:tabular-nums}
-  .topline b{color:var(--text)}
-  .center{display:flex;flex-direction:column;align-items:center;gap:10px}
-  .phase{font-size:26px;font-weight:800;letter-spacing:3px;text-transform:uppercase;color:var(--accent)}
-  .exname{font-size:20px;font-weight:600;min-height:26px;text-align:center}
-  .ringwrap{position:relative;width:min(78vw,340px);aspect-ratio:1}
-  .ringwrap svg{width:100%;height:100%;transform:rotate(-90deg)}
-  .ringbg{stroke:#ffffff14}
-  .ringfg{stroke:var(--accent);transition:stroke .3s}
-  .time{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
-    font-size:min(24vw,108px);font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-2px}
-  .next{color:var(--muted);font-size:15px;min-height:20px}
-  .next b{color:var(--text);font-weight:600}
-  .bar{width:100%;max-width:480px;height:5px;border-radius:5px;background:#ffffff14;overflow:hidden}
-  .bar i{display:block;height:100%;width:0;background:var(--accent)}
-  .controls{display:flex;gap:18px;align-items:center}
-  .cbtn{width:64px;height:64px;border-radius:50%;background:#ffffff14;display:flex;align-items:center;justify-content:center}
-  .cbtn.big{width:84px;height:84px;background:var(--accent);color:#0b0c0e}
-  .cbtn svg{width:28px;height:28px}
-  .cbtn.big svg{width:36px;height:36px}
-  .paused .time{opacity:.45}
+  .dock{position:fixed;left:0;right:0;bottom:0;padding:14px 22px calc(env(safe-area-inset-bottom) + 14px);
+    background:linear-gradient(to top,var(--bg) 70%,transparent)}
+  .go{display:flex;align-items:center;justify-content:space-between;width:100%;max-width:476px;margin:0 auto;height:62px;
+    padding:0 26px;background:var(--ink);color:var(--bg);border-radius:999px;font-size:17px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+  .go span:last-child{font-weight:500;opacity:.7}
 
-  /* modal */
-  .modal{position:fixed;inset:0;background:#000a;display:flex;align-items:center;justify-content:center;padding:24px;z-index:10}
-  .sheet{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;width:100%;max-width:360px}
-  .sheet h3{margin:0 0 12px;font-size:18px}
-  .sheet input{width:100%;height:46px;border-radius:12px;border:1px solid var(--line);background:#101216;color:var(--text);
-    font:inherit;font-size:16px;padding:0 12px;-webkit-user-select:text;user-select:text}
-  .sheet .actions{margin-top:14px}
-  .sheet .btn{height:46px;font-size:16px}
+  /* ============ SHEET ============ */
+  .scrim{position:fixed;inset:0;background:#0007;z-index:20;opacity:0;pointer-events:none;transition:opacity .2s}
+  .scrim.open{opacity:1;pointer-events:auto}
+  .sheet{position:fixed;left:0;right:0;bottom:0;z-index:21;background:var(--bg);border-radius:18px 18px 0 0;
+    max-height:82vh;display:flex;flex-direction:column;transform:translateY(105%);transition:transform .28s cubic-bezier(.2,.8,.2,1);
+    padding:10px 22px calc(env(safe-area-inset-bottom) + 18px);max-width:520px;margin:0 auto}
+  .sheet.open{transform:none}
+  .grab{width:36px;height:4px;border-radius:4px;background:var(--line);margin:4px auto 16px}
+  .sheet h2{font-size:28px;letter-spacing:-.03em;margin:0 0 4px}
+  .sheet .sub{font-size:13px;color:var(--soft);margin-bottom:16px}
+  .saveRow{display:flex;gap:8px;margin-bottom:18px}
+  .saveRow input{flex:1;min-width:0;height:48px;border:1.5px solid var(--ink);border-radius:999px;background:transparent;color:var(--ink);
+    font:inherit;font-size:16px;padding:0 18px;outline:none;-webkit-user-select:text;user-select:text}
+  .saveRow button{height:48px;padding:0 20px;border-radius:999px;background:var(--ink);color:var(--bg);font-weight:700;font-size:14px;letter-spacing:.06em;text-transform:uppercase}
+  .list{overflow-y:auto;border-top:1.5px solid var(--ink);-webkit-overflow-scrolling:touch}
+  .item{display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid var(--line)}
+  .item .load{flex:1;text-align:left;display:flex;flex-direction:column;gap:3px}
+  .item .n{font-size:17px;font-weight:500}
+  .item .d{font-size:13px;color:var(--soft)}
+  .item.cur .n::after{content:"  ●";color:var(--work);font-size:11px;vertical-align:2px}
+  .del{height:34px;min-width:34px;padding:0 10px;border-radius:999px;border:1.5px solid var(--line);font-size:12px;color:var(--soft);
+    letter-spacing:.06em;text-transform:uppercase}
+  .del.confirm{background:var(--work);border-color:var(--work);color:#fff}
+  .empty{padding:28px 0;color:var(--soft);font-size:14px;line-height:1.5}
+  .toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top) + 14px);transform:translate(-50%,-80px);background:var(--ink);color:var(--bg);
+    padding:10px 18px;border-radius:999px;font-size:14px;z-index:30;transition:transform .25s}
+  .toast.show{transform:translate(-50%,0)}
+
+  /* ============ RUN ============ */
+  #run{position:fixed;inset:0;overflow:hidden;color:#fff;background:var(--pd,#000);z-index:10}
+  #fill{position:absolute;left:0;right:0;bottom:0;height:100%;background:var(--pc,#333)}
+  .runIn{position:relative;height:100%;display:flex;flex-direction:column;justify-content:space-between;
+    padding:calc(env(safe-area-inset-top) + 20px) 24px calc(env(safe-area-inset-bottom) + 26px)}
+  .rtop{display:flex;justify-content:space-between;align-items:flex-start}
+  .phase{font-size:15px;font-weight:700;letter-spacing:.3em;text-transform:uppercase}
+  .meta{text-align:right;font-size:13px;line-height:1.6;opacity:.85;letter-spacing:.04em}
+  .meta b{font-weight:700}
+  .mid{display:flex;flex-direction:column;align-items:flex-start}
+  .exname{font-size:24px;font-weight:500;min-height:30px;letter-spacing:-.01em;opacity:.95}
+  .time{font-size:min(36vw,190px);font-weight:700;line-height:.9;letter-spacing:-.05em;margin-left:-.04em}
+  .paused .time{opacity:.4}
+  .next{font-size:15px;opacity:.8;margin-top:14px;min-height:20px}
+  .next b{font-weight:700;opacity:1}
+  .rbot{display:flex;flex-direction:column;gap:22px}
+  .totalbar{height:3px;background:#ffffff33}
+  .totalbar i{display:block;height:100%;width:0;background:#fff}
+  .ctrls{display:flex;justify-content:space-between;align-items:center}
+  .cb{width:62px;height:62px;border-radius:50%;border:1.5px solid #ffffffaa;display:flex;align-items:center;justify-content:center}
+  .cb svg{width:22px;height:22px}
+  .cb.main{width:86px;height:86px;background:#fff;color:#111;border:0}
+  .cb.main svg{width:30px;height:30px}
+  .leftTxt{font-size:13px;opacity:.85;letter-spacing:.04em}
 </style>
 </head>
 <body>
 
-<!-- ================= CONFIG ================= -->
+<!-- ============ CONFIG ============ -->
 <section id="setup">
-  <header>
-    <h1>Tabata</h1>
-    <div class="total">Total <b id="total">0:00</b></div>
-  </header>
+  <div class="top">
+    <div class="brand">TABATA</div>
+    <button class="menuBtn" id="openMenu" aria-label="Configuraciones guardadas">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 4h12M2 8h12M2 12h8"/></svg>
+      Guardados
+    </button>
+  </div>
 
-  <div class="presets" id="presets"></div>
+  <div class="hero">
+    <div class="lbl">Duración total</div>
+    <div class="big num" id="total">0:00</div>
+    <div class="name" id="curName"></div>
+  </div>
 
-  <div class="group">
+  <div class="strip" id="strip"></div>
+
+  <div class="rows">
     <div class="row">
-      <div class="label"><span class="dot" style="background:var(--prep)"></span><div>Preparación<span class="sub">Antes de empezar</span></div></div>
+      <div class="rlabel"><span class="sq" style="background:var(--prep)"></span><div><span class="t">Preparación</span><span class="s">Antes de empezar</span></div></div>
       <div class="stepper" data-key="prep" data-type="time"></div>
     </div>
     <div class="row">
-      <div class="label"><span class="dot" style="background:var(--work)"></span><div>Ejercicio<span class="sub">Tiempo de trabajo</span></div></div>
+      <div class="rlabel"><span class="sq" style="background:var(--work)"></span><div><span class="t">Ejercicio</span><span class="s">Trabajo</span></div></div>
       <div class="stepper" data-key="work" data-type="time"></div>
     </div>
     <div class="row">
-      <div class="label"><span class="dot" style="background:var(--rest)"></span><div>Descanso<span class="sub">Entre ejercicios</span></div></div>
+      <div class="rlabel"><span class="sq" style="background:var(--rest)"></span><div><span class="t">Descanso</span><span class="s">Entre ejercicios</span></div></div>
       <div class="stepper" data-key="rest" data-type="time"></div>
     </div>
-  </div>
-
-  <div class="group">
     <div class="row">
-      <div class="label"><div>Ejercicios<span class="sub">Por ronda</span></div></div>
+      <div class="rlabel"><span class="sq" style="border:1.5px solid var(--ink)"></span><div><span class="t">Ejercicios</span><span class="s">Por ronda</span></div></div>
       <div class="stepper" data-key="exercises" data-type="count"></div>
     </div>
     <div class="row">
-      <div class="label"><div>Rondas</div></div>
+      <div class="rlabel"><span class="sq" style="border:1.5px solid var(--ink)"></span><div><span class="t">Rondas</span><span class="s">Repeticiones del bloque</span></div></div>
       <div class="stepper" data-key="rounds" data-type="count"></div>
     </div>
     <div class="row">
-      <div class="label"><span class="dot" style="background:var(--round)"></span><div>Descanso entre rondas</div></div>
+      <div class="rlabel"><span class="sq" style="background:var(--round)"></span><div><span class="t">Descanso de ronda</span><span class="s">Entre rondas</span></div></div>
       <div class="stepper" data-key="roundRest" data-type="time"></div>
     </div>
   </div>
 
-  <div class="group">
-    <div class="names">
-      <p>Nombres de ejercicios (opcional, uno por línea). Si hay menos que ejercicios, se repiten.</p>
-      <textarea id="names" placeholder="Sentadillas&#10;Flexiones&#10;Burpees&#10;Plancha"></textarea>
+  <div class="section">
+    <div class="shead">Ejercicios</div>
+    <textarea id="names" placeholder="Sentadillas&#10;Flexiones&#10;Burpees&#10;Plancha"></textarea>
+    <div class="hint">Opcional. Uno por línea. Si hay menos nombres que ejercicios, se repiten en orden.</div>
+  </div>
+
+  <div class="section rows">
+    <div class="row">
+      <div class="rlabel"><div><span class="t">Pitidos</span><span class="s">Cuenta atrás 3-2-1 y cambios de fase</span></div></div>
+      <button class="switch" data-toggle="sound" aria-label="Pitidos"></button>
     </div>
     <div class="row">
-      <div class="label"><div>Pitidos<span class="sub">3-2-1 y cambios de fase</span></div></div>
-      <button class="toggle" data-toggle="sound" aria-label="Pitidos"></button>
-    </div>
-    <div class="row">
-      <div class="label"><div>Voz<span class="sub">Anuncia fase y ejercicio</span></div></div>
-      <button class="toggle" data-toggle="voice" aria-label="Voz"></button>
-    </div>
-  </div>
-
-  <div class="actions">
-    <button class="btn ghost" id="saveBtn">Guardar</button>
-    <button class="btn primary" id="startBtn">Empezar</button>
-  </div>
-</section>
-
-<!-- ================= RUN ================= -->
-<section id="run" class="hidden">
-  <div class="topline">
-    <span>Ronda <b id="rRound">1/1</b></span>
-    <span>Ejercicio <b id="rEx">1/1</b></span>
-    <span>Queda <b id="rLeft">0:00</b></span>
-  </div>
-
-  <div class="center">
-    <div class="phase" id="rPhase">Prepárate</div>
-    <div class="exname" id="rName"></div>
-    <div class="ringwrap">
-      <svg viewBox="0 0 120 120">
-        <circle class="ringbg" cx="60" cy="60" r="54" fill="none" stroke-width="7"/>
-        <circle class="ringfg" id="ring" cx="60" cy="60" r="54" fill="none" stroke-width="7" stroke-linecap="round"
-                stroke-dasharray="339.292" stroke-dashoffset="0"/>
-      </svg>
-      <div class="time" id="rTime">0:10</div>
-    </div>
-    <div class="next" id="rNext"></div>
-  </div>
-
-  <div style="width:100%;display:flex;flex-direction:column;align-items:center;gap:22px">
-    <div class="bar"><i id="rBar"></i></div>
-    <div class="controls">
-      <button class="cbtn" id="stopBtn" aria-label="Terminar">
-        <svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
-      </button>
-      <button class="cbtn big" id="pauseBtn" aria-label="Pausa">
-        <svg id="icoPause" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
-        <svg id="icoPlay" class="hidden" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-      </button>
-      <button class="cbtn" id="skipBtn" aria-label="Saltar">
-        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 5v14l9-7zM15 5h3v14h-3z"/></svg>
-      </button>
+      <div class="rlabel"><div><span class="t">Voz</span><span class="s">Anuncia fase y ejercicio</span></div></div>
+      <button class="switch" data-toggle="voice" aria-label="Voz"></button>
     </div>
   </div>
 </section>
 
-<!-- save modal -->
-<div class="modal hidden" id="modal">
-  <div class="sheet">
-    <h3>Guardar preset</h3>
-    <input id="presetName" maxlength="24" placeholder="Ej. Piernas 20 min">
-    <div class="actions">
-      <button class="btn ghost" id="cancelSave">Cancelar</button>
-      <button class="btn primary" id="confirmSave">Guardar</button>
-    </div>
-  </div>
+<div class="dock" id="dock">
+  <button class="go" id="startBtn"><span>Empezar</span><span class="num" id="goTime">0:00</span></button>
 </div>
+
+<!-- ============ SAVED SHEET ============ -->
+<div class="scrim" id="scrim"></div>
+<div class="sheet" id="sheet" role="dialog" aria-label="Configuraciones guardadas">
+  <div class="grab"></div>
+  <h2>Guardados</h2>
+  <div class="sub">Toca una para cargarla. Si guardas con un nombre que ya existe, se actualiza.</div>
+  <form class="saveRow" id="saveForm">
+    <input id="saveName" maxlength="28" placeholder="Nombre, ej. Piernas 20 min" autocomplete="off">
+    <button type="submit">Guardar</button>
+  </form>
+  <div class="list" id="list"></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<!-- ============ RUN ============ -->
+<section id="run" class="hidden">
+  <div id="fill"></div>
+  <div class="runIn">
+    <div class="rtop">
+      <div class="phase" id="rPhase">Prepárate</div>
+      <div class="meta num">Ronda <b id="rRound">1/1</b><br>Ejercicio <b id="rEx">1/1</b></div>
+    </div>
+
+    <div class="mid">
+      <div class="exname" id="rName"></div>
+      <div class="time num" id="rTime">0:10</div>
+      <div class="next" id="rNext"></div>
+    </div>
+
+    <div class="rbot">
+      <div>
+        <div class="totalbar"><i id="rBar"></i></div>
+        <div class="leftTxt num" style="margin-top:8px">Quedan <b id="rLeft">0:00</b></div>
+      </div>
+      <div class="ctrls">
+        <button class="cb" id="stopBtn" aria-label="Terminar">
+          <svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12"/></svg>
+        </button>
+        <button class="cb main" id="pauseBtn" aria-label="Pausa">
+          <svg id="icoPause" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14"/><rect x="14" y="5" width="4" height="14"/></svg>
+          <svg id="icoPlay" class="hidden" viewBox="0 0 24 24" fill="currentColor"><path d="M7 5v14l12-7z"/></svg>
+        </button>
+        <button class="cb" id="skipBtn" aria-label="Saltar">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 5v14l9-7zM15 5h3v14h-3z"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
 
 <script>
 (() => {
-  // ---------- storage (puede fallar) ----------
+  // ---------- almacenamiento local (puede no estar disponible) ----------
   const store = {
     get(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; }catch(e){ return d; } },
     set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
   };
 
+  const KEYS = ["prep","work","rest","exercises","rounds","roundRest"];
   const DEFAULT = { prep:10, work:20, rest:10, exercises:8, rounds:1, roundRest:60, names:"", sound:true, voice:false };
-  const BUILTIN = [
-    { name:"Tabata clásico", cfg:{ prep:10, work:20, rest:10, exercises:8, rounds:1, roundRest:60 } },
-    { name:"HIIT 40/20",     cfg:{ prep:10, work:40, rest:20, exercises:6, rounds:3, roundRest:60 } },
-    { name:"EMOM suave",     cfg:{ prep:10, work:45, rest:15, exercises:5, rounds:4, roundRest:90 } },
-  ];
   let cfg = Object.assign({}, DEFAULT, store.get("tabata.cfg", {}));
-  let userPresets = store.get("tabata.presets", []);
+  let saved = store.get("tabata.presets", []).filter(p => p && p.name && p.cfg);
 
   const LIMITS = {
-    prep:{min:0,max:120}, work:{min:5,max:3600}, rest:{min:0,max:3600},
-    roundRest:{min:0,max:3600}, exercises:{min:1,max:50}, rounds:{min:1,max:50}
+    prep:{min:0,max:600}, work:{min:1,max:3600}, rest:{min:0,max:3600},
+    roundRest:{min:0,max:3600}, exercises:{min:1,max:99}, rounds:{min:1,max:99}
   };
   const $ = id => document.getElementById(id);
-  const fmt = s => { s = Math.max(0, Math.ceil(s)); const m = Math.floor(s/60), r = s%60; return m + ":" + String(r).padStart(2,"0"); };
-  const stepFor = (key, v, dir) => {
-    if (key === "exercises" || key === "rounds") return 1;
-    // pasos más grandes cuanto mayor es el tiempo
-    const base = dir > 0 ? v : v - 1;
-    return base < 60 ? 5 : base < 300 ? 15 : 60;
+  const fmt = s => { s = Math.max(0, Math.ceil(s)); const m = Math.floor(s/60), r = s % 60; return m + ":" + String(r).padStart(2,"0"); };
+  const fmtShort = s => s < 60 ? s + "s" : fmt(s);
+  const PHASE = {
+    prep:{c:"var(--prep)",d:"var(--prep-d)"}, work:{c:"var(--work)",d:"var(--work-d)"},
+    rest:{c:"var(--rest)",d:"var(--rest-d)"}, round:{c:"var(--round)",d:"var(--round-d)"},
+    done:{c:"var(--done)",d:"var(--done-d)"}
   };
+
+  // ---------- steppers: 1 por toque, acelera al mantener ----------
+  const ICON_MINUS = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8h10"/></svg>';
+  const ICON_PLUS  = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8h10M8 3v10"/></svg>';
+
+  function bump(key, dir, size){
+    const lim = LIMITS[key]; let v = cfg[key];
+    if (size > 1 && v % size !== 0){
+      v = dir > 0 ? Math.ceil(v/size)*size : Math.floor(v/size)*size;   // alinea a múltiplos al ir rápido
+    } else v += dir*size;
+    cfg[key] = Math.min(lim.max, Math.max(lim.min, v));
+    changed();
+  }
+
+  document.querySelectorAll(".stepper").forEach(el => {
+    const key = el.dataset.key, isTime = el.dataset.type === "time";
+    el.innerHTML = '<button data-d="-1" aria-label="menos">'+ICON_MINUS+'</button><span class="val num"></span><button data-d="1" aria-label="más">'+ICON_PLUS+'</button>';
+    el.querySelectorAll("button").forEach(b => {
+      const dir = +b.dataset.d; let timer = null, t0 = 0, n = 0;
+      const tick = () => {
+        const held = (performance.now() - t0) / 1000;
+        // tamaño de paso: 1, y en tiempos largos de pulsación sube a 5 y 10
+        const size = isTime ? (held > 4 ? 10 : held > 2.5 ? 5 : 1) : (held > 3 ? 5 : 1);
+        bump(key, dir, size);
+        n++;
+        const delay = Math.max(35, 260 * Math.pow(0.86, n));   // cada vez más rápido
+        timer = setTimeout(tick, delay);
+      };
+      const down = e => {
+        e.preventDefault();
+        try{ b.setPointerCapture(e.pointerId); }catch(_){}
+        b.classList.add("held");
+        bump(key, dir, 1);
+        t0 = performance.now(); n = 0;
+        timer = setTimeout(tick, 420);
+      };
+      const up = () => { clearTimeout(timer); timer = null; b.classList.remove("held"); };
+      b.addEventListener("pointerdown", down);
+      ["pointerup","pointercancel","lostpointercapture"].forEach(ev => b.addEventListener(ev, up));
+      b.addEventListener("contextmenu", e => e.preventDefault());
+    });
+  });
 
   // ---------- render config ----------
-  function renderSteppers(){
+  function matchName(){
+    const hit = saved.find(p => KEYS.every(k => p.cfg[k] === cfg[k]) && (p.cfg.names || "") === (cfg.names || ""));
+    return hit ? hit.name : "";
+  }
+  function render(){
     document.querySelectorAll(".stepper").forEach(el => {
-      const key = el.dataset.key, type = el.dataset.type;
-      if (!el.dataset.built){
-        el.innerHTML = '<button data-d="-1" aria-label="menos">−</button><span class="val"></span><button data-d="1" aria-label="más">+</button>';
-        el.dataset.built = 1;
-        let holdT, repT;
-        const bump = d => {
-          const v = cfg[key], st = stepFor(key, v, d);
-          cfg[key] = Math.min(LIMITS[key].max, Math.max(LIMITS[key].min, v + d*st));
-          if (type === "time" && d < 0 && v % st && st > 1) cfg[key] = Math.max(LIMITS[key].min, v - (v % st));
-          changed();
-        };
-        el.querySelectorAll("button").forEach(b => {
-          const d = +b.dataset.d;
-          const start = e => { e.preventDefault(); bump(d); holdT = setTimeout(() => { repT = setInterval(() => bump(d), 90); }, 380); };
-          const end = () => { clearTimeout(holdT); clearInterval(repT); };
-          b.addEventListener("pointerdown", start);
-          ["pointerup","pointerleave","pointercancel"].forEach(ev => b.addEventListener(ev, end));
-        });
-      }
-      el.querySelector(".val").textContent = type === "time" ? fmt(cfg[key]) : cfg[key];
+      const k = el.dataset.key;
+      el.querySelector(".val").textContent = el.dataset.type === "time" ? fmt(cfg[k]) : cfg[k];
     });
     document.querySelectorAll("[data-toggle]").forEach(t => t.classList.toggle("on", !!cfg[t.dataset.toggle]));
-    $("total").textContent = fmt(totalDuration(buildPlan(cfg)));
-  }
-
-  function renderPresets(){
-    const wrap = $("presets"); wrap.innerHTML = "";
-    const all = BUILTIN.map(p => ({...p, builtin:true})).concat(userPresets);
-    all.forEach((p, i) => {
-      const c = document.createElement("button");
-      c.className = "chip";
-      const same = ["prep","work","rest","exercises","rounds","roundRest"].every(k => p.cfg[k] === cfg[k]) && (p.builtin || (p.cfg.names||"") === (cfg.names||""));
-      if (same) c.classList.add("active");
-      c.textContent = p.name;
-      if (!p.builtin){
-        const x = document.createElement("span"); x.className = "x"; x.textContent = "✕";
-        x.addEventListener("click", e => {
-          e.stopPropagation();
-          userPresets = userPresets.filter(u => u !== p); store.set("tabata.presets", userPresets); renderPresets();
-        });
-        c.appendChild(x);
-      }
-      c.addEventListener("click", () => {
-        Object.assign(cfg, p.cfg);
-        if (p.builtin) cfg.names = cfg.names; // conserva nombres actuales
-        $("names").value = cfg.names || "";
-        changed();
-      });
-      wrap.appendChild(c);
+    const plan = buildPlan(cfg), tot = totalDuration(plan);
+    $("total").textContent = fmt(tot);
+    $("goTime").textContent = fmt(tot);
+    const nm = matchName();
+    $("curName").innerHTML = nm ? "Cargado: <b></b>" : "Sin guardar";
+    if (nm) $("curName").querySelector("b").textContent = nm;
+    // tira de estructura
+    const strip = $("strip"); strip.innerHTML = "";
+    plan.filter(s => s.dur > 0).forEach(s => {
+      const i = document.createElement("i"); i.style.flexGrow = s.dur; i.style.background = PHASE[s.type].c; strip.appendChild(i);
     });
   }
-
-  function changed(){ store.set("tabata.cfg", cfg); renderSteppers(); renderPresets(); }
+  function changed(){ store.set("tabata.cfg", cfg); render(); }
 
   $("names").value = cfg.names || "";
-  $("names").addEventListener("input", e => { cfg.names = e.target.value; store.set("tabata.cfg", cfg); renderPresets(); });
+  $("names").addEventListener("input", e => { cfg.names = e.target.value; changed(); });
   document.querySelectorAll("[data-toggle]").forEach(t => t.addEventListener("click", () => { cfg[t.dataset.toggle] = !cfg[t.dataset.toggle]; changed(); }));
 
-  // save preset
-  $("saveBtn").onclick = () => { $("presetName").value = ""; $("modal").classList.remove("hidden"); setTimeout(() => $("presetName").focus(), 50); };
-  $("cancelSave").onclick = () => $("modal").classList.add("hidden");
-  $("confirmSave").onclick = () => {
-    const name = $("presetName").value.trim() || ("Preset " + (userPresets.length + 1));
-    const c = {}; ["prep","work","rest","exercises","rounds","roundRest","names"].forEach(k => c[k] = cfg[k]);
-    userPresets = userPresets.filter(u => u.name !== name).concat([{ name, cfg:c }]);
-    store.set("tabata.presets", userPresets);
-    $("modal").classList.add("hidden"); renderPresets();
-  };
+  // ---------- menú de guardados ----------
+  function toast(msg){ const t = $("toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("show"), 1600); }
+  function openSheet(){ renderList(); $("scrim").classList.add("open"); $("sheet").classList.add("open"); $("saveName").value = matchName(); }
+  function closeSheet(){ $("scrim").classList.remove("open"); $("sheet").classList.remove("open"); document.activeElement && document.activeElement.blur(); }
+  $("openMenu").onclick = openSheet;
+  $("scrim").onclick = closeSheet;
+
+  function describe(c){
+    let s = fmtShort(c.work) + " / " + fmtShort(c.rest) + " · " + c.exercises + " ej × " + c.rounds + (c.rounds > 1 ? " rondas" : " ronda");
+    s += " · " + fmt(totalDuration(buildPlan(c)));
+    return s;
+  }
+  function renderList(){
+    const list = $("list"); list.innerHTML = "";
+    if (!saved.length){
+      list.innerHTML = '<div class="empty">Aún no tienes configuraciones guardadas.<br>Ajusta los tiempos, ponle un nombre arriba y pulsa Guardar.</div>';
+      return;
+    }
+    const cur = matchName();
+    saved.forEach(p => {
+      const row = document.createElement("div"); row.className = "item" + (p.name === cur ? " cur" : "");
+      const load = document.createElement("button"); load.className = "load";
+      const n = document.createElement("span"); n.className = "n"; n.textContent = p.name;
+      const d = document.createElement("span"); d.className = "d num"; d.textContent = describe(Object.assign({}, DEFAULT, p.cfg));
+      load.append(n, d);
+      load.onclick = () => {
+        KEYS.forEach(k => cfg[k] = p.cfg[k]); cfg.names = p.cfg.names || "";
+        $("names").value = cfg.names; changed(); closeSheet(); toast("Cargado: " + p.name);
+      };
+      const del = document.createElement("button"); del.className = "del"; del.textContent = "✕";
+      del.onclick = () => {
+        if (!del.classList.contains("confirm")){
+          del.classList.add("confirm"); del.textContent = "Borrar";
+          setTimeout(() => { if (del.isConnected){ del.classList.remove("confirm"); del.textContent = "✕"; } }, 2500);
+          return;
+        }
+        saved = saved.filter(x => x !== p); store.set("tabata.presets", saved); renderList(); render();
+      };
+      row.append(load, del); list.appendChild(row);
+    });
+  }
+  $("saveForm").addEventListener("submit", e => {
+    e.preventDefault();
+    const name = $("saveName").value.trim();
+    if (!name){ $("saveName").focus(); return; }
+    const c = {}; KEYS.forEach(k => c[k] = cfg[k]); c.names = cfg.names || "";
+    const i = saved.findIndex(p => p.name.toLowerCase() === name.toLowerCase());
+    if (i >= 0) saved[i] = { name, cfg:c }; else saved.push({ name, cfg:c });
+    store.set("tabata.presets", saved);
+    $("saveName").blur(); renderList(); render(); toast(i >= 0 ? "Actualizado" : "Guardado");
+  });
 
   // ---------- plan ----------
-  function exerciseNames(c){
-    return (c.names || "").split("\n").map(s => s.trim()).filter(Boolean);
-  }
   function buildPlan(c){
-    const names = exerciseNames(c), plan = [];
+    const names = (c.names || "").split("\n").map(s => s.trim()).filter(Boolean), plan = [];
     if (c.prep > 0) plan.push({ type:"prep", dur:c.prep, label:"Prepárate", round:1, ex:1 });
     for (let r = 1; r <= c.rounds; r++){
       for (let e = 1; e <= c.exercises; e++){
-        const name = names.length ? names[(e-1) % names.length] : "";
-        plan.push({ type:"work", dur:c.work, label:"Trabaja", round:r, ex:e, name });
-        const lastEx = e === c.exercises;
-        if (!lastEx && c.rest > 0) plan.push({ type:"rest", dur:c.rest, label:"Descanso", round:r, ex:e });
+        plan.push({ type:"work", dur:c.work, label:"Trabaja", round:r, ex:e, name: names.length ? names[(e-1) % names.length] : "" });
+        if (e < c.exercises && c.rest > 0) plan.push({ type:"rest", dur:c.rest, label:"Descansa", round:r, ex:e });
       }
-      if (r < c.rounds && c.roundRest > 0) plan.push({ type:"round", dur:c.roundRest, label:"Descanso de ronda", round:r, ex:c.exercises });
-      // si no hay descanso de ronda, usa el descanso normal entre la última y la primera
-      else if (r < c.rounds && c.rest > 0) plan.push({ type:"rest", dur:c.rest, label:"Descanso", round:r, ex:c.exercises });
+      if (r < c.rounds){
+        if (c.roundRest > 0) plan.push({ type:"round", dur:c.roundRest, label:"Fin de ronda", round:r, ex:c.exercises });
+        else if (c.rest > 0) plan.push({ type:"rest", dur:c.rest, label:"Descansa", round:r, ex:c.exercises });
+      }
     }
-    plan.push({ type:"done", dur:0, label:"¡Terminado!", round:c.rounds, ex:c.exercises });
+    plan.push({ type:"done", dur:0, label:"Hecho", round:c.rounds, ex:c.exercises });
     let t = 0; plan.forEach(s => { s.start = t; t += s.dur; });
     return plan;
   }
@@ -347,7 +430,6 @@
     try{
       if (!ac) ac = new (window.AudioContext || window.webkitAudioContext)();
       if (ac.state === "suspended") ac.resume();
-      // buffer silencioso para desbloquear en iOS
       const b = ac.createBuffer(1, 1, 22050), s = ac.createBufferSource(); s.buffer = b; s.connect(ac.destination); s.start(0);
     }catch(e){}
   }
@@ -362,115 +444,87 @@
     }catch(e){}
   }
   function phaseSound(type){
-    if (type === "work"){ beep(1320, .35, .45); }
+    if (type === "work") beep(1320, .35, .45);
     else if (type === "done"){ beep(988,.18,.4,0); beep(1319,.18,.4,.2); beep(1568,.4,.45,.4); }
-    else { beep(660, .35, .4); }
+    else beep(660, .35, .4);
   }
   function say(text){
     if (!cfg.voice || !text || !("speechSynthesis" in window)) return;
-    try{
-      speechSynthesis.cancel();
-      const u = new SpeechSynthesisUtterance(text); u.lang = "es-ES"; u.rate = 1.05;
-      speechSynthesis.speak(u);
-    }catch(e){}
+    try{ speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.lang = "es-ES"; u.rate = 1.05; speechSynthesis.speak(u); }catch(e){}
   }
 
-  // ---------- wake lock ----------
+  // ---------- pantalla encendida ----------
   let wakeLock = null;
-  async function keepAwake(){
-    try{ if ("wakeLock" in navigator) wakeLock = await navigator.wakeLock.request("screen"); }catch(e){}
-  }
+  async function keepAwake(){ try{ if ("wakeLock" in navigator) wakeLock = await navigator.wakeLock.request("screen"); }catch(e){} }
   function releaseAwake(){ try{ wakeLock && wakeLock.release(); }catch(e){} wakeLock = null; }
 
-  // ---------- runner (basado en reloj real, no en contar ticks) ----------
+  // ---------- temporizador (basado en reloj real) ----------
   let plan = [], startTs = 0, pausedAt = 0, offset = 0, running = false, raf = 0, curIdx = -1, lastSec = -1;
-  const CIRC = 339.292;
   const now = () => performance.now() / 1000;
-  const elapsed = () => (pausedAt ? pausedAt : now()) - startTs + offset;
+  const elapsed = () => (pausedAt || now()) - startTs + offset;
+  const indexAt = t => { for (let i = 0; i < plan.length; i++) if (plan[i].type === "done" || t < plan[i].start + plan[i].dur) return i; return plan.length - 1; };
+  const runEl = $("run");
 
   function start(){
     unlockAudio();
     plan = buildPlan(cfg);
     startTs = now(); pausedAt = 0; offset = 0; curIdx = -1; lastSec = -1; running = true;
-    $("setup").classList.add("hidden"); $("run").classList.remove("hidden");
-    $("run").classList.remove("paused"); setPauseIcon(false);
-    keepAwake();
-    tick();
+    $("setup").classList.add("hidden"); $("dock").classList.add("hidden"); runEl.classList.remove("hidden","paused");
+    setPauseIcon(false); keepAwake(); loop();
   }
   function stop(){
     running = false; cancelAnimationFrame(raf); releaseAwake();
     try{ speechSynthesis.cancel(); }catch(e){}
-    $("run").classList.add("hidden"); $("setup").classList.remove("hidden");
+    runEl.classList.add("hidden"); $("setup").classList.remove("hidden"); $("dock").classList.remove("hidden");
   }
   function togglePause(){
     if (!running) return;
     unlockAudio();
-    if (pausedAt){ startTs += now() - pausedAt; pausedAt = 0; $("run").classList.remove("paused"); setPauseIcon(false); keepAwake(); tick(); }
-    else { pausedAt = now(); $("run").classList.add("paused"); setPauseIcon(true); cancelAnimationFrame(raf); render(); }
+    if (pausedAt){ startTs += now() - pausedAt; pausedAt = 0; runEl.classList.remove("paused"); setPauseIcon(false); keepAwake(); loop(); }
+    else { pausedAt = now(); runEl.classList.add("paused"); setPauseIcon(true); cancelAnimationFrame(raf); draw(); }
   }
   function skip(){
     if (!running) return;
     const i = indexAt(elapsed());
-    if (i < plan.length - 1){ offset += plan[i+1].start - elapsed() + 0.001; render(); }
+    if (i < plan.length - 1){ offset += plan[i+1].start - elapsed() + 0.001; draw(); }
   }
-  function setPauseIcon(paused){ $("icoPause").classList.toggle("hidden", paused); $("icoPlay").classList.toggle("hidden", !paused); }
+  function setPauseIcon(p){ $("icoPause").classList.toggle("hidden", p); $("icoPlay").classList.toggle("hidden", !p); }
 
-  function indexAt(t){
-    for (let i = 0; i < plan.length; i++){ if (t < plan[i].start + plan[i].dur || plan[i].type === "done") return i; }
-    return plan.length - 1;
-  }
-
-  const COLORS = { prep:"var(--prep)", work:"var(--work)", rest:"var(--rest)", round:"var(--round)", done:"var(--done)" };
-
-  function render(){
+  function draw(){
     const t = elapsed(), i = indexAt(t), seg = plan[i], total = totalDuration(plan);
-    const remain = seg.type === "done" ? 0 : seg.start + seg.dur - t;
-    const sec = Math.ceil(remain);
+    const remain = seg.type === "done" ? 0 : seg.start + seg.dur - t, sec = Math.ceil(remain);
 
     if (i !== curIdx){
-      const prevIdx = curIdx; curIdx = i;
-      document.documentElement.style.setProperty("--accent", COLORS[seg.type]);
+      const first = curIdx === -1; curIdx = i;
+      runEl.style.setProperty("--pc", PHASE[seg.type].c);
+      runEl.style.setProperty("--pd", PHASE[seg.type].d);
       $("rPhase").textContent = seg.label;
       $("rName").textContent = seg.type === "work" ? seg.name : "";
-      if (prevIdx !== -1 || seg.type !== "prep") phaseSound(seg.type);
-      if (seg.type === "work") say(seg.name || "Trabaja");
-      else if (seg.type === "rest") say("Descanso");
-      else if (seg.type === "round") say("Descanso de ronda");
-      else if (seg.type === "prep") say("Prepárate");
-      else if (seg.type === "done") say("Terminado. Buen trabajo");
+      if (!first || seg.type !== "prep") phaseSound(seg.type);
+      say({ work: seg.name || "Trabaja", rest:"Descansa", round:"Fin de ronda", prep:"Prepárate", done:"Hecho. Buen trabajo" }[seg.type]);
       lastSec = sec;
     }
-    // cuenta atrás 3-2-1
-    if (sec !== lastSec){
-      if (sec >= 1 && sec <= 3 && seg.type !== "done" && !pausedAt) beep(880, .1, .3);
-      lastSec = sec;
-    }
+    if (sec !== lastSec){ if (sec >= 1 && sec <= 3 && seg.type !== "done" && !pausedAt) beep(880, .1, .3); lastSec = sec; }
 
     $("rTime").textContent = seg.type === "done" ? "✓" : fmt(remain);
-    const frac = seg.dur ? Math.min(1, Math.max(0, (t - seg.start) / seg.dur)) : 1;
-    $("ring").style.strokeDashoffset = (CIRC * frac).toFixed(2);
+    const frac = seg.dur ? Math.min(1, Math.max(0, remain / seg.dur)) : 0;
+    $("fill").style.height = (frac * 100).toFixed(2) + "%";
     $("rBar").style.width = (Math.min(1, t / Math.max(total, 1)) * 100).toFixed(2) + "%";
     $("rRound").textContent = seg.round + "/" + cfg.rounds;
     $("rEx").textContent = seg.ex + "/" + cfg.exercises;
     $("rLeft").textContent = fmt(Math.max(0, total - t));
 
-    // siguiente
     const nx = plan.slice(i+1).find(s => s.type !== "done");
-    if (seg.type === "done") $("rNext").innerHTML = "";
-    else if (!nx) $("rNext").innerHTML = "Último tramo";
-    else $("rNext").innerHTML = "Siguiente: <b>" + (nx.type === "work" ? (nx.name || "Ejercicio " + nx.ex) : nx.label) + "</b> · " + fmt(nx.dur);
+    if (seg.type === "done") $("rNext").textContent = "";
+    else if (!nx) $("rNext").textContent = "Último tramo";
+    else { $("rNext").innerHTML = "Después: <b></b> · " + fmt(nx.dur); $("rNext").querySelector("b").textContent = nx.type === "work" ? (nx.name || "Ejercicio " + nx.ex) : nx.label; }
 
     if (seg.type === "done"){ running = false; releaseAwake(); }
   }
-
-  function tick(){
-    if (!running || pausedAt) return;
-    render();
-    if (running) raf = requestAnimationFrame(tick);
-  }
+  function loop(){ if (!running || pausedAt) return; draw(); if (running) raf = requestAnimationFrame(loop); }
 
   document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "visible" && running && !pausedAt){ keepAwake(); unlockAudio(); tick(); }
+    if (document.visibilityState === "visible" && running && !pausedAt){ keepAwake(); unlockAudio(); loop(); }
   });
 
   $("startBtn").onclick = start;
@@ -478,7 +532,7 @@
   $("pauseBtn").onclick = togglePause;
   $("skipBtn").onclick = skip;
 
-  renderSteppers(); renderPresets();
+  render();
 })();
 </script>
 </body>
